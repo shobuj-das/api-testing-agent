@@ -147,9 +147,50 @@ def create_llm_client(
     mock_responses: Iterable[str | dict[str, Any]] = (),
 ) -> LLMClient:
     """Create a supported provider client without coupling agents to an SDK."""
-    if settings.llm_provider.lower() == "mock":
-        return MockLLMClient(mock_responses, max_structured_retries=settings.max_retries)
+    provider = settings.llm_provider.lower()
+    retries = settings.max_retries
+
+    if provider == "mock":
+        return MockLLMClient(mock_responses, max_structured_retries=retries)
+
+    if provider == "openai":
+        from ai.providers.openai_client import OpenAILLMClient
+        if not settings.llm_api_key:
+            raise LLMProviderError("LLM_API_KEY is required for the OpenAI provider.")
+        return OpenAILLMClient(
+            api_key=settings.llm_api_key,
+            model=settings.llm_model or "gpt-4o",
+            max_structured_retries=retries,
+        )
+
+    if provider == "anthropic":
+        from ai.providers.anthropic_client import AnthropicLLMClient
+        if not settings.llm_api_key:
+            raise LLMProviderError("LLM_API_KEY is required for the Anthropic provider.")
+        return AnthropicLLMClient(
+            api_key=settings.llm_api_key,
+            model=settings.llm_model or "claude-sonnet-4-20250514",
+            max_structured_retries=retries,
+        )
+
+    if provider == "gemini":
+        from ai.providers.gemini_client import GeminiLLMClient
+        if not settings.llm_api_key:
+            raise LLMProviderError("LLM_API_KEY is required for the Gemini provider.")
+        return GeminiLLMClient(
+            api_key=settings.llm_api_key,
+            model=settings.llm_model or "gemini-2.5-flash",
+            max_structured_retries=retries,
+        )
+
+    if provider == "ollama":
+        from ai.providers.ollama_client import OllamaLLMClient
+        return OllamaLLMClient(
+            model=settings.llm_model or "llama3.1",
+            max_structured_retries=retries,
+        )
+
     raise LLMProviderError(
-        f"LLM provider '{settings.llm_provider}' is not installed. "
-        "Use LLM_PROVIDER=mock or add a provider adapter in a future milestone."
+        f"LLM provider '{settings.llm_provider}' is not supported. "
+        "Supported: mock, openai, anthropic, gemini, ollama"
     )

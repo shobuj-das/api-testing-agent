@@ -45,6 +45,13 @@ class Settings:
     max_agent_iterations: int = 25
     max_retries: int = 1
 
+    # Notification channels
+    discord_webhook_url: str | None = None
+    discord_mention_role: str | None = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
+    notify_on_success: bool = False
+
     @classmethod
     def from_environment(cls) -> "Settings":
         """Load settings, optionally reading a local .env file first."""
@@ -77,6 +84,11 @@ class Settings:
             llm_api_key=os.getenv("LLM_API_KEY") or None,
             max_agent_iterations=max_iterations,
             max_retries=max_retries,
+            discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL") or None,
+            discord_mention_role=os.getenv("DISCORD_MENTION_ROLE") or None,
+            telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
+            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID") or None,
+            notify_on_success=_as_bool(os.getenv("NOTIFY_ON_SUCCESS")),
         )
 
     def assert_execution_allowed(self) -> None:

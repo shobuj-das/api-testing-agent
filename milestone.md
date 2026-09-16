@@ -157,6 +157,56 @@ Status: complete
 - Expanded `README.md` with complete installation, configuration, CLI usage, cross-project instructions, and development standards.
 - Verified absence of unmasked secrets in user-facing outputs.
 
+## Planned milestones
+
+### Milestone 15 — Real LLM provider adapters
+
+Status: planned
+
+- Add provider-specific `LLMClient` subclasses for OpenAI, Anthropic, Google Gemini, and Ollama.
+- Each adapter is a single file in `ai/providers/` with lazy SDK imports.
+- Update `create_llm_client()` factory to route by `LLM_PROVIDER` environment variable.
+- Switching providers requires changing one environment variable only, no code modifications.
+- Ollama adapter enables fully local, free AI testing with no API key.
+
+### Milestone 16 — Notification system (Discord and Telegram)
+
+Status: planned
+
+- Add pluggable `NotificationManager` with channel-specific adapters in `notifications/`.
+- Add `DiscordNotifier` sending structured embeds to Discord webhooks.
+- Add `TelegramNotifier` sending formatted MarkdownV2 messages via Telegram Bot API.
+- Notification payloads include test summaries, top failures, classifications, and report links.
+- Notifications triggered automatically when failures are detected; configurable for success runs.
+- Notification channels configured via environment variables or project YAML profiles.
+
+### Milestone 17 — Enhanced multi-project configuration
+
+Status: planned
+
+- Extend `ProjectConfig` with provider-specific settings (temperature, max tokens, base URL override).
+- Add example YAML project profiles for Restful Booker, Petstore, and generic templates.
+- Merge notification settings from project config into the agent pipeline.
+- Enable zero-code cross-project reuse by swapping one YAML file.
+
+### Milestone 18 — Tests for new components
+
+Status: planned
+
+- Add unit tests for each LLM provider adapter (interface compliance, error handling, factory routing).
+- Add unit tests for notification system (message formatting, MarkdownV2 escaping, channel aggregation).
+- Add notification model validation tests.
+- All 60 existing tests remain unchanged and passing.
+
+### Milestone 19 — Documentation and milestone updates
+
+Status: planned
+
+- Update `README.md` with LLM provider setup guides, notification configuration, and multi-project examples.
+- Update `docs/architecture.md` with provider adapter architecture and notification system design.
+- Update `.env.example` with all new environment variables.
+- Update `milestone.md` to reflect completed milestones.
+
 ## Current verification baseline
 
 - Python: 3.14.3
@@ -172,3 +222,12 @@ python scripts/run_agent.py --spec examples/restful_booker/openapi.json
 ```
 
 and the framework can parse the API, produce validated structured tests in mock or provider mode, remove duplicates, present tests for approval, execute approved tests, make deterministic assertions, classify failures, execute supported workflows, and write a final QA report.
+
+## Definition of done for the full AI agent
+
+The full AI agent is complete when:
+
+- The user can switch between LLM providers (OpenAI, Anthropic, Gemini, Ollama) by changing one environment variable.
+- Test failures automatically trigger notifications to configured Discord and/or Telegram channels.
+- Any REST API can be tested by providing an OpenAPI spec and a YAML project configuration profile.
+- All automated tests pass, including new provider and notification tests.

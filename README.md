@@ -390,3 +390,29 @@ python -m pytest -p no:cacheprovider
 ```
 
 **Latest verification status**: **60 passed** (100% pass rate).
+
+## LLM Providers
+The agent supports multiple LLM providers. You only need to set the `LLM_PROVIDER` environment variable and install the respective SDK if needed. No code changes are required.
+
+Supported providers:
+- `mock`: Default, for offline/testing. No SDK or API key needed.
+- `openai`: Requires `pip install openai` and `LLM_API_KEY`.
+- `anthropic`: Requires `pip install anthropic` and `LLM_API_KEY`.
+- `gemini`: Requires `pip install google-generativeai` and `LLM_API_KEY`.
+- `ollama`: For local models. No SDK or API key needed (uses `requests`). Requires `LLM_MODEL`.
+
+Example for OpenAI:
+```bash
+LLM_PROVIDER=openai LLM_API_KEY=sk-... python scripts/run_agent.py --spec openapi.json
+```
+
+## Notifications
+You can configure the agent to send test reports to Discord or Telegram when a run finishes.
+
+**Discord:**
+Set `DISCORD_WEBHOOK_URL` in your `.env` or project profile.
+
+**Telegram:**
+Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in your `.env` or project profile.
+
+By default, notifications are sent only if there are failures. Set `NOTIFY_ON_SUCCESS=true` to always send.

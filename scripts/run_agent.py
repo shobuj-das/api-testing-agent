@@ -102,23 +102,43 @@ def main() -> int:
 
     # Determine Base URL
     base_url = args.base_url or project_cfg.base_url or (spec.servers[0] if spec.servers else "http://localhost:8000")
-    env = Environment(args.environment.lower())
+    env_str = args.environment.lower() if args.environment != "staging" else (project_cfg.environment.value if hasattr(project_cfg.environment, "value") else str(project_cfg.environment))
+    env = Environment(env_str.lower())
     allow_prod = args.allow_production or project_cfg.allow_production_execution
+    
+    # Base settings from environment
+    env_settings = Settings.from_environment()
 
     settings = Settings(
         api_base_url=base_url.rstrip("/"),
         environment=env,
         allow_production_execution=allow_prod,
         api_timeout=project_cfg.api_timeout,
-        max_agent_iterations=args.max_iterations,
-        max_retries=args.max_retries,
+        max_agent_iterations=args.max_iterations if args.max_iterations != 50 else project_cfg.max_iterations,
+        max_retries=args.max_retries if args.max_retries != 1 else project_cfg.max_retries,
+        llm_provider=project_cfg.llm_provider if project_cfg.llm_provider != "mock" else env_settings.llm_provider,
+        llm_model=project_cfg.llm_model or env_settings.llm_model,
+        llm_api_key=project_cfg.llm_api_key or env_settings.llm_api_key,
+        discord_webhook_url=project_cfg.discord_webhook_url or env_settings.discord_webhook_url,
+        discord_mention_role=project_cfg.discord_mention_role or env_settings.discord_mention_role,
+        telegram_bot_token=project_cfg.telegram_bot_token or env_settings.telegram_bot_token,
+        telegram_chat_id=project_cfg.telegram_chat_id or env_settings.telegram_chat_id,
+        notify_on_success=project_cfg.notify_on_success or env_settings.notify_on_success,
     )
 
     print(f"      Target Base URL: {settings.api_base_url} ({settings.environment.value.upper()})")
 
     # 2. Plan and Understand Endpoints
-    print("\n[2/5] Running API Understanding and Test Generation Agents...")
-    llm_client = AutoMockLLMClient()
+    print(f"\n[2/5] Running API Understanding and Test Generation Agents ({settings.llm_provider})...")
+    from ai.llm_client import create_llm_client
+    
+    # We use AutoMockLLMClient if the provider is mock and we don't have explicit mock responses provided
+    # For actual providers, create_llm_client handles it.
+    if settings.llm_provider.lower() == "mock":
+        llm_client = AutoMockLLMClient()
+    else:
+        llm_client = create_llm_client(settings)
+        
     understanding_agent = APIUnderstandingAgent(llm_client)
     generation_agent = TestGenerationAgent(llm_client)
     failure_agent = FailureAnalysisAgent(llm_client)
@@ -225,6 +245,63 @@ def main() -> int:
     print(f" JSON Report    : {json_path}")
     print(f" HTML Report    : {html_path}")
     print("=" * 70 + "\n")
+
+    # 6. Send notifications if configured
+    from notifications.manager import NotificationManager
+    from notifications.models import TestSummary, FailureSummary
+
+    notification_mgr = NotificationManager()
+
+    if settings.discord_webhook_url:
+        from notifications.discord_notifier import DiscordNotifier
+        notification_mgr.add_channel(
+            DiscordNotifier(settings.discord_webhook_url, mention_role=settings.discord_mention_role)
+        )
+
+    if settings.telegram_bot_token and settings.telegram_chat_id:
+        from notifications.telegram_notifier import TelegramNotifier
+        notification_mgr.add_channel(
+            TelegramNotifier(settings.telegram_bot_token, settings.telegram_chat_id)
+        )
+
+    if notification_mgr._channels:
+        # Build failures list
+        failures = []
+        for fail in state.failures:
+            # Find the corresponding execution result for the status code
+            exec_res = next((r for r in state.execution_results if r.test_id == fail.test_id), None)
+            actual_status = exec_res.response.status_code if exec_res and exec_res.response else None
+            
+            # Find the test case
+            tc = next((t for t in state.generated_tests if t.id == fail.test_id), None)
+            if tc:
+                failures.append(FailureSummary(
+                    test_id=fail.test_id,
+                    title=tc.title,
+                    endpoint=tc.endpoint,
+                    method=tc.method,
+                    expected_status=tc.expected_status,
+                    actual_status=actual_status,
+                    classification=fail.classification.value if fail.classification else None,
+                    confidence=fail.confidence
+                ))
+
+        summary = TestSummary(
+            project_name=project_cfg.project_name,
+            total_tests=len(state.execution_results),
+            passed=passed_count,
+            failed=failed_count,
+            errors=error_count,
+            pass_rate=pass_rate,
+            duration_ms=sum(r.duration_ms for r in state.execution_results),
+            failures=failures,
+            report_url=None  # Can be populated if uploading reports to S3/etc
+        )
+        
+        if failed_count > 0 or error_count > 0 or settings.notify_on_success:
+            delivered = notification_mgr.notify(summary)
+            print(f"[Notifications] Sent to {delivered}/{len(notification_mgr._channels)} channels.")
+
 
     return 0 if (failed_count == 0 and error_count == 0) else 1
 

@@ -1,0 +1,8 @@
+project_name: "Petstore API"
+spec_url: "https://petstore3.swagger.io/api/v3/openapi.json"
+base_url: "https://petstore3.swagger.io/api/v3"
+environment: staging
+llm_provider: openai
+llm_model: gpt-4o-mini
+auto_approve: true
+max_tests: 20

@@ -140,3 +140,12 @@ Every transition is recorded in `AgentState.decisions` with timestamp, iteration
 The framework produces two deterministic artifacts in `reports/`:
 1. **`reports/report.json`**: Machine-readable JSON summary for CI/CD pipelines containing test counts, pass rates, durations, raw executions, failure root-causes, workflows, and decisions.
 2. **`reports/report.html`**: A standalone, modern HTML report with dashboard cards, category breakdown, full execution tables, badges, failure analysis cards with next actions, and workflow progress. It requires no external internet connection or CDN scripts.
+
+## LLM Provider Architecture
+The LLM abstraction is defined by the `LLMClient` ABC, allowing plug-and-play AI backends. 
+Providers (OpenAI, Anthropic, Gemini, Ollama, Mock) are isolated in `ai/providers/` and instantiated via `create_llm_client()`.
+Switching providers is handled entirely by the `LLM_PROVIDER` environment variable with zero code modifications required.
+
+## Notification System Architecture
+Test run summaries and failure insights are routed to external channels via a pluggable `NotificationManager`.
+Currently, `DiscordNotifier` and `TelegramNotifier` implement the channel interface. The NotificationManager aggregates the channels and dispatches alerts upon test completion.

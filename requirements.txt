@@ -5,3 +5,8 @@ PyYAML>=6.0,<7
 jsonschema>=4.0,<5
 pytest>=8.0,<9
 pytest-html>=4.0,<5
+# Optional LLM providers (install as needed):
+# pip install openai        # For OpenAI/Azure
+# pip install anthropic     # For Anthropic Claude
+# pip install google-generativeai  # For Google Gemini
+# Ollama uses HTTP via requests (no extra dependency)

@@ -1,0 +1,17 @@
+project_name: "Restful Booker API"
+spec_path: "examples/restful_booker/openapi.json"
+base_url: "https://restful-booker.herokuapp.com"
+environment: staging
+llm_provider: mock
+auto_approve: false
+max_tests: 30
+execute_workflows: true
+auth:
+  endpoint: /auth
+  method: POST
+  payload:
+    username: admin
+    password: password123
+  token_json_path: token
+  token_header_name: Cookie
+  token_header_prefix: "token="

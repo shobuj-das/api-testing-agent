@@ -52,6 +52,19 @@ class ProjectConfig(BaseModel):
     execute_workflows: bool = True
     auto_approve: bool = False
 
+    # LLM Settings
+    llm_api_key: str | None = None
+    llm_temperature: float = 0.2
+    llm_max_tokens: int = 4096
+    llm_base_url: str | None = None
+
+    # Notification
+    discord_webhook_url: str | None = None
+    discord_mention_role: str | None = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
+    notify_on_success: bool = False
+
     @classmethod
     def from_file(cls, config_path: str | Path) -> "ProjectConfig":
         """Load configuration from a YAML or JSON file."""
