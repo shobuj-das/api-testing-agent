@@ -1,0 +1,322 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Restful Booker API",
+    "description": "An example API for practicing API automation and exploratory testing.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://restful-booker.herokuapp.com"
+    }
+  ],
+  "paths": {
+    "/auth": {
+      "post": {
+        "summary": "Create Authentication Token",
+        "description": "Creates a new auth token to use for accessing PUT and DELETE /booking",
+        "operationId": "createToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "admin"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful, token returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["token"],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "Session authentication token"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking": {
+      "get": {
+        "summary": "Get Booking IDs",
+        "description": "Returns the ids of all the bookings that exist within the API.",
+        "operationId": "getBookingIds",
+        "parameters": [
+          {
+            "name": "firstname",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastname",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of booking IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "bookingid": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Booking",
+        "description": "Creates a new booking in the API.",
+        "operationId": "createBooking",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["bookingid", "booking"],
+                  "properties": {
+                    "bookingid": {
+                      "type": "integer",
+                      "description": "The unique ID of the created booking"
+                    },
+                    "booking": {
+                      "$ref": "#/components/schemas/Booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/{id}": {
+      "get": {
+        "summary": "Get Booking",
+        "description": "Returns a specific booking based upon the booking id provided.",
+        "operationId": "getBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Booking identifier",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Booking",
+        "description": "Updates a current booking with new data.",
+        "operationId": "updateBooking",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Booking",
+        "description": "Deletes a booking by ID.",
+        "operationId": "deleteBooking",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Booking deleted successfully."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BookingDates": {
+        "type": "object",
+        "required": ["checkin", "checkout"],
+        "properties": {
+          "checkin": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "checkout": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-05"
+          }
+        }
+      },
+      "BookingRequest": {
+        "type": "object",
+        "required": ["firstname", "lastname", "totalprice", "depositpaid", "bookingdates"],
+        "properties": {
+          "firstname": {
+            "type": "string",
+            "example": "Jim"
+          },
+          "lastname": {
+            "type": "string",
+            "example": "Brown"
+          },
+          "totalprice": {
+            "type": "integer",
+            "example": 111
+          },
+          "depositpaid": {
+            "type": "boolean",
+            "example": true
+          },
+          "bookingdates": {
+            "$ref": "#/components/schemas/BookingDates"
+          },
+          "additionalneeds": {
+            "type": "string",
+            "example": "Breakfast"
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "required": ["firstname", "lastname", "totalprice", "depositpaid", "bookingdates"],
+        "properties": {
+          "firstname": {
+            "type": "string",
+            "example": "Jim"
+          },
+          "lastname": {
+            "type": "string",
+            "example": "Brown"
+          },
+          "totalprice": {
+            "type": "integer",
+            "example": 111
+          },
+          "depositpaid": {
+            "type": "boolean",
+            "example": true
+          },
+          "bookingdates": {
+            "$ref": "#/components/schemas/BookingDates"
+          },
+          "additionalneeds": {
+            "type": "string",
+            "example": "Breakfast"
+          }
+        }
+      }
+    }
+  }
+}
