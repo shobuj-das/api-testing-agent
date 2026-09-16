@@ -10,7 +10,7 @@ class GeminiLLMClient(LLMClient):
         self,
         *,
         api_key: str,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-3.6-flash",
         max_structured_retries: int = 1,
         temperature: float = 0.2,
         max_tokens: int = 4096,

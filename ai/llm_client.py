@@ -179,7 +179,7 @@ def create_llm_client(
             raise LLMProviderError("LLM_API_KEY is required for the Gemini provider.")
         return GeminiLLMClient(
             api_key=settings.llm_api_key,
-            model=settings.llm_model or "gemini-2.5-flash",
+            model=settings.llm_model or "gemini-3.6-flash",
             max_structured_retries=retries,
         )
 
